@@ -1,7 +1,7 @@
 "use client";
 import { Oleo_Script } from "next/font/google";
 import { BINGO } from "@/utils/bingo";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,23 +15,38 @@ export default function Home() {
   const [bingo, setBingo] = useState(BINGO);
   const [numberActualy, setnumberActualy] = useState("00");
 
+  function sleep(ms: any) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async function sortBingo() {
     const notChosen = bingo.filter((n) => !n.status);
     if (notChosen.length === 0) {
       alert("Todos os números já foram escolhidos!");
       return;
     }
+
+    for (const e of notChosen) {
+      const i = Math.floor(Math.random() * notChosen.length);
+      setnumberActualy(i.toString());
+      await sleep(60);
+    }
+
     const i = Math.floor(Math.random() * notChosen.length);
+
     const numberChonsen = notChosen[i];
     const newB = bingo.map((n) =>
       n.id === numberChonsen.id ? { ...n, status: true } : n
     );
+
+    setnumberActualy(numberChonsen.id);
     setBingo(newB);
   }
 
   function resetBingo() {
     const newB = bingo.map((n) => ({ ...n, status: false }));
     setBingo(newB);
+    setnumberActualy("00");
   }
 
   return (
