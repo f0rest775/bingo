@@ -17,7 +17,5 @@ O projeto consiste em uma aplicação web que simula um jogo de Bingo. Os númer
 
 - NextJS
 - Tailwind CSS
-<<<<<<< HEAD
-=======
-
->>>>>>> d304bcf75ec2de4d3ca44ef7acf56a758315c65a
+- Prisma
+- Trpc
