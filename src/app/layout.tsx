@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { cn } from "@/lib/utils";
 import "./globals.css";
+import { TRPCReactProvider } from "@/trpc/react";
+import { cookies } from "next/headers";
 
 import { Inter as FontSans } from "next/font/google";
 const fontSans = FontSans({
@@ -26,7 +28,9 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        {children}
+        <TRPCReactProvider cookies={cookies().toString()}>
+          {children}
+        </TRPCReactProvider>
       </body>
     </html>
   );

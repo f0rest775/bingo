@@ -1,18 +1,37 @@
 "use client";
 import { Oleo_Script } from "next/font/google";
 import { BINGO } from "@/utils/bingo";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+
+import { api } from "@/trpc/react";
+import { Loader } from "lucide-react";
 
 const oswald = Oleo_Script({
   weight: "700",
   subsets: ["latin"],
 });
 
-export default function Home() {
-  const [bingo, setBingo] = useState(BINGO);
+interface IBingo {
+  params: {
+    bingoId: string;
+  };
+}
+
+export default function BingoPage({ params }: IBingo) {
+  const { data } = api.room.findByID.useQuery({
+    id: params.bingoId,
+  });
+
+  const { mutateAsync: updateStatus } = api.room.updateByID.useMutation();
+
+  const utils = api.useUtils();
+
+  const { mutateAsync: resetRoom, isLoading } =
+    api.room.resetRoom.useMutation();
+
   const [numberActualy, setnumberActualy] = useState("00");
 
   function sleep(ms: any) {
@@ -20,32 +39,35 @@ export default function Home() {
   }
 
   async function sortBingo() {
-    const notChosen = bingo.filter((n) => !n.status);
-    if (notChosen.length === 0) {
+    const notChosen = data?.stones.filter((n) => !n.status);
+
+    if (notChosen?.length === 0) {
       alert("Todos os números já foram escolhidos!");
       return;
     }
 
-    for (const e of notChosen) {
-      const i = Math.floor(Math.random() * notChosen.length);
+    for (const e of notChosen!) {
+      const i = Math.floor(Math.random() * notChosen!.length);
       setnumberActualy(i.toString());
       await sleep(60);
     }
 
-    const i = Math.floor(Math.random() * notChosen.length);
+    const i = Math.floor(Math.random() * notChosen!.length);
 
-    const numberChonsen = notChosen[i];
-    const newB = bingo.map((n) =>
-      n.id === numberChonsen.id ? { ...n, status: true } : n
-    );
+    const numberChonsen = notChosen![i];
 
-    setnumberActualy(numberChonsen.id);
-    setBingo(newB);
+    setnumberActualy(numberChonsen.number.toString());
+
+    await updateStatus({ id: numberChonsen.id });
+
+    await utils.room.findByID.refetch();
   }
 
-  function resetBingo() {
-    const newB = bingo.map((n) => ({ ...n, status: false }));
-    setBingo(newB);
+  async function resetBingo() {
+    await resetRoom({
+      id: params.bingoId,
+    });
+    await utils.room.findByID.refetch();
     setnumberActualy("00");
   }
 
@@ -62,7 +84,6 @@ export default function Home() {
           >
             Girar o BINGO!!
           </Button>
-
           <Button
             onClick={resetBingo}
             variant={"outline"}
@@ -70,7 +91,8 @@ export default function Home() {
               "hover:bg-[#B68133] border-[#B68133] hover:text-white font-semibold text-[#b68133]"
             )}
           >
-            Nova rodada!!
+            {isLoading && <Loader className="w-5 h-5 shrink-0" />}
+            {!isLoading && "Nova rodada!!"}
           </Button>
         </div>
 
@@ -78,7 +100,7 @@ export default function Home() {
           <div
             className={`${oswald.className} text-7xl font-semibold text-[#B68132]`}
           >
-            Bingo Família Coco
+            Bingo {data?.name}
           </div>
 
           <div className="flex flex-col items-center justify-center">
@@ -130,7 +152,7 @@ export default function Home() {
           </div>
         </div>
         <div className="col-span-15 grid grid-cols-15 gap-4">
-          {bingo.map((B, index) => (
+          {data?.stones.map((B, index) => (
             <div
               key={index}
               className={cn(
@@ -140,7 +162,7 @@ export default function Home() {
                   : "bg-neutral-100 text-[#B68132]"
               )}
             >
-              <h2>{B.id}</h2>
+              <h2>{B.number}</h2>
             </div>
           ))}
         </div>

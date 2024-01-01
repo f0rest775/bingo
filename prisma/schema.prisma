@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Stone {
+  id     String  @id @default(cuid())
+  status Boolean @default(false)
+  number Int
+  room   Room?   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String?
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String
+  duration  String
+  createdAt DateTime @default(now())
+  stones    Stone[]
+}
